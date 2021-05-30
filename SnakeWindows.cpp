@@ -32,7 +32,7 @@ typedef struct PedacitoS PEDACITOS;
 
 PEDACITOS * NuevaSerpiente(int);
 void DibujarSerpiente(HDC, const PEDACITOS *);
-
+int MoverSerpiente(PEDACITOS*, int, RECT);
 // Variables globales:
 HINSTANCE hInst;                                // instancia actual
 WCHAR szTitle[MAX_LOADSTRING];                  // Texto de la barra de título
@@ -178,6 +178,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+	case WM_KEYDOWN: {
+		GetClientRect(hWnd, &rect);
+		switch (wParam)
+		{
+			case VK_RIGHT: {
+				MoverSerpiente(serpiente, DER, rect);
+				InvalidateRect(hWnd, NULL, TRUE);
+				break;
+			}
+			case VK_LEFT: {
+				MoverSerpiente(serpiente, IZQ, rect);
+				InvalidateRect(hWnd, NULL, TRUE);
+				break;
+			}
+			case VK_UP: {
+				MoverSerpiente(serpiente, ARR, rect);
+				InvalidateRect(hWnd, NULL, TRUE);
+				break;
+			}
+			case VK_DOWN: {
+				MoverSerpiente(serpiente, ABA, rect);
+				InvalidateRect(hWnd, NULL, TRUE);
+				break;
+			}			
+		}
+	}
     case WM_PAINT:
         {
             hdc = BeginPaint(hWnd, &ps);
@@ -370,4 +396,58 @@ void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente) {
 		break;
 	}
 
+}
+
+int MoverSerpiente(PEDACITOS* serpiente, int dir, RECT rect) {
+	int i = 0;
+	while (serpiente[i].tipo != CABEZA) {
+		serpiente[i].dir = serpiente[i + 1].dir;
+		serpiente[i].pos = serpiente[i + 1].pos;
+		i++;
+	}
+
+	switch (serpiente[i].dir)
+	{
+	case DER:
+		if (dir != IZQ)
+			serpiente[i].dir = dir;
+		break;
+	case IZQ:
+		if (dir != DER)
+			serpiente[i].dir = dir;
+		break;
+	case ARR:
+		if (dir != ABA)
+			serpiente[i].dir = dir;
+		break;
+	case ABA:
+		if (dir != ARR)
+			serpiente[i].dir = dir;
+		break;
+	}
+
+	switch (serpiente[i].dir)
+	{
+	case DER:
+		serpiente[i].pos.x = serpiente[i].pos.x + 1;
+		if (serpiente[i].pos.x >= rect.right / TAMSERP)
+			serpiente[i].pos.x = 0;
+		break;
+	case IZQ:
+		serpiente[i].pos.x = serpiente[i].pos.x - 1;
+		if (serpiente[i].pos.x < 0)
+			serpiente[i].pos.x = rect.right / TAMSERP;
+		break;
+	case ARR:
+		serpiente[i].pos.y = serpiente[i].pos.y - 1;
+		if (serpiente[i].pos.y < 0)
+			serpiente[i].pos.y = rect.bottom / TAMSERP;
+		break;
+	case ABA:
+		serpiente[i].pos.y = serpiente[i].pos.y + 1;
+		if (serpiente[i].pos.y > rect.bottom / TAMSERP)
+			serpiente[i].pos.y = 0;
+		break;
+	}
+	return 0;
 }
