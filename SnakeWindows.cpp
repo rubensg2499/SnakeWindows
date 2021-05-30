@@ -31,7 +31,7 @@ struct PedacitoS {
 typedef struct PedacitoS PEDACITOS;
 
 PEDACITOS * NuevaSerpiente(int);
-void DibujarSerpiente(HDC, const PEDACITOS *, RECT);
+void DibujarSerpiente(HDC, const PEDACITOS *);
 
 // Variables globales:
 HINSTANCE hInst;                                // instancia actual
@@ -150,8 +150,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	PAINTSTRUCT ps;
+	HDC hdc;
+	RECT rect;
+	static PEDACITOS* serpiente = NULL;
+	static int tams = 5;
     switch (message)
     {
+	case WM_CREATE: {
+		serpiente = NuevaSerpiente(5);
+		break;
+	}
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -171,9 +180,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
+            hdc = BeginPaint(hWnd, &ps);
             // TODO: Agregar cualquier código de dibujo que use hDC aquí...
+			DibujarSerpiente(hdc, serpiente);
             EndPaint(hWnd, &ps);
         }
         break;
@@ -218,30 +227,40 @@ PEDACITOS * NuevaSerpiente(int tams) {
 	}
 	serpiente[0].tipo = COLA;
 	serpiente[0].pos.x = 1;
-	serpiente[0].pos.x = 1;
+	serpiente[0].pos.y = 1;
 	serpiente[0].dir = DER;
 
-	for (i = 0; i < tams - 1; i++) {
+	for (i = 1; i < tams - 1; i++) {
 		serpiente[i].tipo = CUERPO;
 		serpiente[i].pos.x = i + 1;
-		serpiente[i].pos.x = 1;
+		serpiente[i].pos.y = 1;
 		serpiente[i].dir = DER;
 	}
 
-	serpiente[0].tipo = CABEZA;
-	serpiente[0].pos.x = tams;
-	serpiente[0].pos.x = 1;
-	serpiente[0].dir = DER;
+	serpiente[i].tipo = CABEZA;
+	serpiente[i].pos.x = tams;
+	serpiente[i].pos.y = 1;
+	serpiente[i].dir = DER;
 
 	return serpiente;
 }
-void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente, RECT rect) {
-	int i;
+void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente) {
+	int i = 1;
+	//Dibujar cola
 	switch (serpiente[0].dir)
 	{
 	case DER:
+		MoveToEx(hdc, serpiente[0].pos.x * TAMSERP + TAMSERP, 
+					  serpiente[0].pos.y * TAMSERP, NULL);
+		LineTo(hdc, serpiente[0].pos.x * TAMSERP, 
+					serpiente[0].pos.y * TAMSERP + TAMSERP / 2);
+		LineTo(hdc, serpiente[0].pos.x * TAMSERP + TAMSERP, 
+					serpiente[0].pos.y * TAMSERP + TAMSERP);
+		LineTo(hdc, serpiente[0].pos.x * TAMSERP + TAMSERP, 
+					serpiente[0].pos.y * TAMSERP);
 		break;
 	case IZQ:
+
 		break;
 	case ARR:
 		break;
@@ -250,4 +269,43 @@ void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente, RECT rect) {
 	default:
 		break;
 	}
+	//Dibujar cuerpo
+	while (serpiente[i].tipo != CABEZA) {
+		RoundRect(hdc, 
+			serpiente[i].pos.x * TAMSERP,
+			serpiente[i].pos.y * TAMSERP, serpiente[i].pos.x * TAMSERP + TAMSERP, 
+			serpiente[i].pos.y * TAMSERP + TAMSERP, 5, 5);
+		i++;
+	}
+	//Dibujar cabeza
+	RoundRect(hdc, 
+		serpiente[i].pos.x * TAMSERP, 
+		serpiente[i].pos.y * TAMSERP, 
+		serpiente[i].pos.x * TAMSERP + TAMSERP,
+		serpiente[i].pos.y * TAMSERP + TAMSERP, 5, 5);
+	switch (serpiente[i].dir)
+	{
+	case DER:
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP,
+			serpiente[i].pos.y * TAMSERP,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2);
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP/2,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP);
+		break;
+	case IZQ:
+
+		break;
+	case ARR:
+		break;
+	case ABA:
+		break;
+	default:
+		break;
+	}
+
 }
