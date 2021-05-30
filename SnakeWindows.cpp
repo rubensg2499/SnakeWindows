@@ -260,21 +260,56 @@ void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente) {
 					serpiente[0].pos.y * TAMSERP);
 		break;
 	case IZQ:
-
+		MoveToEx(hdc, 
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP, NULL);
+		LineTo(hdc, 
+			serpiente[0].pos.x * TAMSERP + TAMSERP,
+			serpiente[0].pos.y * TAMSERP + TAMSERP / 2);
+		LineTo(hdc, 
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP + TAMSERP);
+		LineTo(hdc, 
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP);
 		break;
 	case ARR:
+		MoveToEx(hdc,
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP, NULL);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[0].pos.y * TAMSERP + TAMSERP);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP + TAMSERP,
+			serpiente[0].pos.y * TAMSERP);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP);
 		break;
 	case ABA:
-		break;
-	default:
+		MoveToEx(hdc,
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP + TAMSERP, NULL);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[0].pos.y * TAMSERP);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP + TAMSERP,
+			serpiente[0].pos.y * TAMSERP + TAMSERP);
+		LineTo(hdc,
+			serpiente[0].pos.x * TAMSERP,
+			serpiente[0].pos.y * TAMSERP + TAMSERP);
 		break;
 	}
 	//Dibujar cuerpo
 	while (serpiente[i].tipo != CABEZA) {
 		RoundRect(hdc, 
 			serpiente[i].pos.x * TAMSERP,
-			serpiente[i].pos.y * TAMSERP, serpiente[i].pos.x * TAMSERP + TAMSERP, 
-			serpiente[i].pos.y * TAMSERP + TAMSERP, 5, 5);
+			serpiente[i].pos.y * TAMSERP, 
+			serpiente[i].pos.x * TAMSERP + TAMSERP, 
+			serpiente[i].pos.y * TAMSERP + TAMSERP, 
+			5, 5);
 		i++;
 	}
 	//Dibujar cabeza
@@ -298,13 +333,40 @@ void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente) {
 			serpiente[i].pos.y * TAMSERP + TAMSERP);
 		break;
 	case IZQ:
-
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP,
+			serpiente[i].pos.x * TAMSERP + TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2);
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.x * TAMSERP + TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP);
 		break;
 	case ARR:
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP);
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.x * TAMSERP + TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP);
 		break;
 	case ABA:
-		break;
-	default:
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP,
+			serpiente[i].pos.y * TAMSERP,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2);
+		Ellipse(hdc,
+			serpiente[i].pos.x * TAMSERP + TAMSERP / 2,
+			serpiente[i].pos.y * TAMSERP,
+			serpiente[i].pos.x * TAMSERP + TAMSERP,
+			serpiente[i].pos.y * TAMSERP + TAMSERP / 2);
 		break;
 	}
 
