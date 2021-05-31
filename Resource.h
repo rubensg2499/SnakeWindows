@@ -13,6 +13,7 @@
 #define IDI_SMALL				108
 #define IDC_SNAKEWINDOWS			109
 #define IDC_MYICON				2
+#define IDM_NUEVO				200
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif

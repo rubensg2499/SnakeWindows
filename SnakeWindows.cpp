@@ -141,8 +141,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Almacenar identificador de instancia en una variable global
 
-   HWND hWnd = CreateWindowW(szWindowClass, L"Snake Windows", WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+   HWND hWnd = CreateWindowW(szWindowClass, L"Snake Windows Ruben", WS_OVERLAPPEDWINDOW,
+      0, 0, 500, 500, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -223,6 +223,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
+			case IDM_NUEVO:
+				if (serpiente != NULL) {
+					KillTimer(hWnd, ID_TIMER1);
+					free(serpiente);
+					tams = 5;
+					cuenta = 0;
+					serpiente = NuevaSerpiente(tams);
+					SetTimer(hWnd, ID_TIMER1, 500, NULL);
+					InvalidateRect(hWnd, NULL, TRUE);
+				}
+				break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -305,6 +316,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+		free(serpiente);
         PostQuitMessage(0);
         break;
     default:
