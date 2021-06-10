@@ -9,11 +9,13 @@
 #define IDD_ABOUTBOX			103
 #define IDM_ABOUT				104
 #define IDM_EXIT				105
-#define IDI_SNAKEWINDOWS			107
+#define IDI_SNAKEWINDOWS		107
 #define IDI_SMALL				108
-#define IDC_SNAKEWINDOWS			109
+#define IDC_SNAKEWINDOWS		109
 #define IDC_MYICON				2
-#define IDM_NUEVO				200
+#define IDM_JUGARSOLO			200
+#define IDM_JUGARMULTI			201
+#define IDM_CONECTARSE			202
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif

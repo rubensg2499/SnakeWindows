@@ -13,3 +13,23 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+
+
+struct pos {
+	int x;
+	int y;
+};
+typedef struct pos POS;
+
+struct PedacitoS {
+	POS pos;
+	int tipo;
+	int dir;
+};
+typedef struct PedacitoS PEDACITOS;
+
+struct comida {
+	POS pos;
+	int tipo;
+};
+typedef struct comida COMIDA;

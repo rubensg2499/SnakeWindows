@@ -3,44 +3,12 @@
 
 #include "framework.h"
 #include "SnakeWindows.h"
+#include "Serpiente.h"
 
 #define MAX_LOADSTRING 100
 
-#define TAMSERP 20
-
-#define CUERPO	1
-#define CABEZA	2
-#define COLA	3
-
-#define IZQ		1
-#define DER		2
-#define ARR		3
-#define ABA		4
-
-#define CRECE	1
-#define ACHICA	2
-#define NADA	3
 
 #define ID_TIMER1	1
-
-struct pos {
-	int x;
-	int y;
-};
-typedef struct pos POS;
-
-struct PedacitoS {
-	POS pos;
-	int tipo;
-	int dir;
-};
-typedef struct PedacitoS PEDACITOS;
-
-struct comida {
-	POS pos;
-	int tipo;
-};
-typedef struct comida COMIDA;
 
 COMIDA com = { {0,0}, NADA };
 
@@ -140,9 +108,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Almacenar identificador de instancia en una variable global
-
+   int iWidth = 500;
+   int iHeight = 500;
+   int iLeft = (GetSystemMetrics(SM_CXSCREEN) / 2) - (iWidth / 2);
+   int iTop = (GetSystemMetrics(SM_CYSCREEN) / 2) - (iHeight / 2);
    HWND hWnd = CreateWindowW(szWindowClass, L"Snake Windows Ruben", WS_OVERLAPPEDWINDOW,
-      0, 0, 500, 500, nullptr, nullptr, hInstance, nullptr);
+      iLeft, iTop, iWidth, iHeight, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {
@@ -171,13 +142,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC hdc;
 	RECT rect;
 	static PEDACITOS* serpiente = NULL;
+	static PEDACITOS* serpiente_cliente = NULL;
 	static int tams = 5;
+	static int tams_cliente = 0;
 	static int cuenta = 0;
     switch (message)
     {
 	case WM_CREATE: {
 		serpiente = NuevaSerpiente(5);
-		SetTimer(hWnd, ID_TIMER1, 500, NULL);
 		break;
 	}
 	case WM_TIMER: {
@@ -223,7 +195,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_EXIT:
                 DestroyWindow(hWnd);
                 break;
-			case IDM_NUEVO:
+			case IDM_JUGARSOLO:
 				if (serpiente != NULL) {
 					KillTimer(hWnd, ID_TIMER1);
 					free(serpiente);
@@ -233,6 +205,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					SetTimer(hWnd, ID_TIMER1, 500, NULL);
 					InvalidateRect(hWnd, NULL, TRUE);
 				}
+				break;
+			case IDM_JUGARMULTI:
+				serpiente_cliente = NuevaSerpiente(tams_cliente);
+				break;
+			case IDM_CONECTARSE:
 				break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
