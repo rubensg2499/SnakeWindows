@@ -14,6 +14,10 @@
 #define ACHICA	2
 #define NADA	3
 
+#define SERVIDOR 1
+#define CLIENTE	 2
+#define SOLO	 0
+
 struct pos {
 	int x;
 	int y;
