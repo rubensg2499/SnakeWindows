@@ -13,3 +13,29 @@
 #define CRECE	1
 #define ACHICA	2
 #define NADA	3
+
+struct pos {
+	int x;
+	int y;
+};
+typedef struct pos POS;
+
+struct PedacitoS {
+	POS pos;
+	int tipo;
+	int dir;
+};
+typedef struct PedacitoS PEDACITOS;
+
+struct comida {
+	POS pos;
+	int tipo;
+};
+typedef struct comida COMIDA;
+
+struct informacion {
+	POS pos;
+	int dir;
+	int tam;
+};
+typedef struct informacion INFO;

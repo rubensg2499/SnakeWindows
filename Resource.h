@@ -16,6 +16,7 @@
 #define IDM_JUGARSOLO			200
 #define IDM_JUGARMULTI			201
 #define IDM_CONECTARSE			202
+#define IDC_EDITIP				204
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif
