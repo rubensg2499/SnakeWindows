@@ -22,20 +22,20 @@
 
 COMIDA com = { {0,0}, NADA };
 
-PEDACITOS * NuevaSerpiente(int,int,int);
-void DibujarSerpiente(HDC, const PEDACITOS *);
-int MoverSerpiente(PEDACITOS*, int, RECT, int);
-int Colisionar(PEDACITOS*, int);
+PEDACITOS * NuevaSerpiente(int, int, int);
 PEDACITOS * AjustarSerpiente(PEDACITOS*, int*, int, RECT);
-int Comer(PEDACITOS*, int);
+void DibujarSerpiente(HDC, const PEDACITOS*);
+bool MoverSerpiente(PEDACITOS*, int, RECT, int);
+bool Colisionar(PEDACITOS*, int);
+bool Comer(PEDACITOS*, int);
 
 //Funciones para el Servidor y Cliente
 DWORD WINAPI Servidor(LPVOID);
-int Cliente(HWND, char*, PSTR);
-void ObtenerDatos(char* mensaje, HWND hwnd);
-void EnviarMensaje(HWND hwnd, char* mensaje, HWND hIP);
+bool Cliente(HWND, char*, PSTR);
+void ObtenerDatos(char*, HWND);
+void EnviarMensaje(HWND, char*, HWND);
 void NumToChar(int, int, int, char*);
-int ColisionarSerpientes(PEDACITOS* serpiente1, PEDACITOS* serpiente2, int tams1, int tams2);
+bool ColisionarSerpientes(PEDACITOS*, PEDACITOS*, int, int);
 
 static PEDACITOS* serpiente_cliente = NULL;
 static PEDACITOS* serpiente = NULL;
@@ -67,7 +67,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Colocar código aquí.
-	TCHAR tchIP[17], tchszUsuario[32];
+	TCHAR tchIP[17];
 	if (_tcslen(lpCmdLine) > 10) {
 		swscanf(lpCmdLine, L"%s", tchIP);
 		wcstombs(szMiIP, tchIP, 17);
@@ -706,7 +706,7 @@ void DibujarSerpiente(HDC hdc, const PEDACITOS* serpiente) {
 	SelectObject(hdc, plumaTemp);
 }
 
-int MoverSerpiente(PEDACITOS* serpiente, int dir, RECT rect, int tams) {
+bool MoverSerpiente(PEDACITOS* serpiente, int dir, RECT rect, int tams) {
 	int i = 0;
 	while (serpiente[i].tipo != CABEZA) {
 		serpiente[i].dir = serpiente[i + 1].dir;
@@ -760,26 +760,26 @@ int MoverSerpiente(PEDACITOS* serpiente, int dir, RECT rect, int tams) {
 	return !Colisionar(serpiente, tams);
 }
 
-int Colisionar(PEDACITOS* serpiente, int tams) {
+bool Colisionar(PEDACITOS* serpiente, int tams) {
 	int i = 0;
 	while (serpiente[i].tipo != CABEZA) {
 		if (serpiente[i].pos.x == serpiente[tams - 1].pos.x && serpiente[i].pos.y == serpiente[tams - 1].pos.y) {
-			return 1;
+			return true;
 		}
 		i++;
 	}
-	return 0;
+	return false;
 }
 
-int ColisionarSerpientes(PEDACITOS* serpiente1, PEDACITOS* serpiente2, int tams1, int tams2) {
+bool ColisionarSerpientes(PEDACITOS* serpiente1, PEDACITOS* serpiente2, int tams1, int tams2) {
 	int i = 0;
 	while (serpiente1[i].tipo != CABEZA) {
 		if (serpiente1[i].pos.x == serpiente2[tams2 - 1].pos.x && serpiente1[i].pos.y == serpiente2[tams2 - 1].pos.y) {
-			return 1;
+			return true;
 		}
 		i++;
 	}
-	return 0;
+	return false;
 }
 
 PEDACITOS* AjustarSerpiente(PEDACITOS* serpiente, int* tams, int comida, RECT rect) {
@@ -836,15 +836,15 @@ PEDACITOS* AjustarSerpiente(PEDACITOS* serpiente, int* tams, int comida, RECT re
 	}
 	return serpiente;
 }
-int Comer(PEDACITOS* serpiente, int tams) {
+bool Comer(PEDACITOS* serpiente, int tams) {
 	if (serpiente[tams - 1].pos.x == com.pos.x && serpiente[tams - 1].pos.y == com.pos.y) {
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 //Código para el Servidor y el Cliente
-int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
+bool Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
 	struct addrinfo* result = NULL,
@@ -861,7 +861,7 @@ int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 	if (iResult != 0) {
 		wsprintf(msgFalla, L"WSAStartup failed with error: %d\n", iResult);
 		MessageBox(NULL, msgFalla, L"Error en cliente", MB_OK | MB_ICONERROR);
-		return 1;
+		return true;
 	}
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -874,7 +874,7 @@ int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 		wsprintf(msgFalla, L"getaddrinfo failed with error: %d\n", iResult);
 		MessageBox(NULL, msgFalla, L"Error en cliente", MB_OK | MB_ICONERROR);
 		WSACleanup();
-		return 1;
+		return true;
 	}
 
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
@@ -883,7 +883,7 @@ int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 			wsprintf(msgFalla, L"socket failed with error: %d\n", WSAGetLastError());
 			MessageBox(NULL, msgFalla, L"Error en cliente", MB_OK | MB_ICONERROR);
 			WSACleanup();
-			return 1;
+			return true;
 		}
 
 		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
@@ -900,7 +900,7 @@ int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 		//sprintf_s(szMsg, "Error en la llamada a connect\nla dirección %s no es válida", szDirIP);
 		//Mostrar_Mensaje(hChat, localhost, chat, szMsg, RGB(255, 0, 0));
 		WSACleanup();
-		return 1;
+		return true;
 	}
 	sprintf_s(szMsg, "%s %s ", szMiIP, szUsuario);
 	iResult = send(ConnectSocket, szMsg, sizeof(char) * 256, 0);
@@ -914,7 +914,7 @@ int Cliente(HWND hwnd, char* szDirIP, PSTR pstrMensaje) {
 	ObtenerDatos(szMsg, hwnd);
 	closesocket(ConnectSocket);
 	WSACleanup();
-	return 1;
+	return true;
 }
 
 DWORD WINAPI Servidor(LPVOID argumento) {
@@ -937,7 +937,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 	if (iResult != 0) {
 		wsprintf(msgFalla, L"WSAStartup failed with error: %d\n", iResult);
 		MessageBox(NULL, msgFalla, L"Error en servidor", MB_OK | MB_ICONERROR);
-		return 1;
+		return true;
 	}
 
 	ZeroMemory(&hints, sizeof(hints));
@@ -951,7 +951,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 		wsprintf(msgFalla, L"getaddrinfo failed with error: %d\n", iResult);
 		MessageBox(NULL, msgFalla, L"Error en servidor", MB_OK | MB_ICONERROR);
 		WSACleanup();
-		return 1;
+		return true;
 	}
 
 	ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
@@ -959,7 +959,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 		wsprintf(msgFalla, L"socket failed with error: %d\n", WSAGetLastError());
 		MessageBox(NULL, msgFalla, L"Error en servidor", MB_OK | MB_ICONERROR);
 		freeaddrinfo(result);
-		return 1;
+		return true;
 	}
 
 	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
@@ -969,7 +969,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 		freeaddrinfo(result);
 		closesocket(ListenSocket);
 		WSACleanup();
-		return 1;
+		return true;
 	}
 
 	freeaddrinfo(result);
@@ -980,7 +980,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 		MessageBox(NULL, msgFalla, L"Error en servidor", MB_OK | MB_ICONERROR);
 		closesocket(ListenSocket);
 		WSACleanup();
-		return 1;
+		return true;
 	}
 
 	while (TRUE)
@@ -992,7 +992,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 			MessageBox(NULL, msgFalla, L"Error en servidor", MB_OK | MB_ICONERROR);
 			closesocket(ListenSocket);
 			WSACleanup();
-			return 1;
+			return true;
 		}
 
 		iResult = recv(ClientSocket, szBuffer, sizeof(char) * 256, 0);
@@ -1009,7 +1009,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 
 	closesocket(ClientSocket);
 	WSACleanup();
-	return 1;
+	return true;
 }
 
 void ObtenerDatos(char* mensaje, HWND hwnd) {
@@ -1053,7 +1053,7 @@ void EnviarMensaje(HWND hwnd, char * mensaje, HWND hIP)
 	PSTR pstrBuffer;
 	TCHAR* ptchBuffer;
 
-	iLength = strlen(mensaje);
+	iLength = (long)strlen(mensaje);
 	if (NULL == (pstrBuffer = (PSTR)malloc(sizeof(char) * (iLength + 2))) ||
 		NULL == (ptchBuffer = (TCHAR*)malloc(sizeof(TCHAR) * (iLength + 2))))
 		MessageBox(NULL, L"Error al reservar memoria", L"Error", MB_OK || MB_ICONERROR);
