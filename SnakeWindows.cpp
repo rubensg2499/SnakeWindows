@@ -209,20 +209,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//Ambas serpientes se mueven con el timer
 			if (!MoverSerpiente(serpiente, serpiente[tams - 1].dir, rect, tams)) {
 				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio F", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+				MessageBox(hWnd, L"Ya se murio el servidor Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
 			}
 			if (!MoverSerpiente(serpiente_cliente, serpiente_cliente[tamsC - 1].dir, rect, tamsC)) {
 				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio F", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+				MessageBox(hWnd, L"Ya se muri el cliente Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
 			}
 			//Código para verificar si las serpientes chocan entre sí.
 			if (ColisionarSerpientes(serpiente, serpiente_cliente, tams, tamsC)) {
 				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio F", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+				MessageBox(hWnd, L"Ya se murio el servidor Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
 			}
 			if (ColisionarSerpientes(serpiente_cliente, serpiente, tamsC, tams)) {
 				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio F", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+				MessageBox(hWnd, L"Ya se murio el cliente Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
 			}
 			cuenta++;
 			if (cuenta == 15) {
@@ -242,7 +242,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				com.tipo = NADA;
 			}
 			if (Comer(serpiente_cliente, tamsC)) {
-				serpiente = AjustarSerpiente(serpiente, &tamsC, com.tipo, rect);
+				serpiente_cliente = AjustarSerpiente(serpiente_cliente, &tamsC, com.tipo, rect);
 				com.tipo = NADA;
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
@@ -294,8 +294,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				MessageBox(hWnd, L"Error al crear el hilo servidor", L"Error", MB_OK | MB_ICONERROR);
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
-		}
-						   break;
+			}
+			SetFocus(hWnd);
+			break;
 		case IDM_CONECTARSE:
 			//Se levanta el hilo cliente, aunque es solo una forma de llamarlo
 			//dado que también ejecuta código de servidor.
@@ -313,8 +314,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				MessageBox(hWnd, L"Error al crear el hilo para el cliente", L"Error", MB_OK | MB_ICONERROR);
 			}
 			SetFocus(hWnd);
-			SetFocus(hWnd);
-
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
@@ -1014,7 +1013,7 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 }
 
 void ObtenerDatos(char* mensaje, HWND hwnd) {
-	TCHAR informacion[256];
+	//TCHAR informacion[256];
 	int actual=0, dir=0, tam= 0;
 
 	sscanf(mensaje, "%d %d %d", &dir, &tam, &actual);
@@ -1023,14 +1022,14 @@ void ObtenerDatos(char* mensaje, HWND hwnd) {
 	//MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
 	if (actual == SERVIDOR)
 	{
-		wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir %d", actual,dir);
-		MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
+		//wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir %d", actual,dir);
+		//MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
 		serpiente[tam - 1].dir = dir;
 		tams = tam;
 	}
 	if (actual == CLIENTE){
-		wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir %d", actual,dir);
-		MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
+		//wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir %d", actual,dir);
+		//MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
 		serpiente_cliente[tam - 1].dir = dir;
 		tamsC = tam;
 	}
