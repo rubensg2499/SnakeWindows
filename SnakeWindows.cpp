@@ -34,7 +34,7 @@ DWORD WINAPI Servidor(LPVOID);
 bool Cliente(HWND, char*, PSTR);
 void ObtenerDatos(char*, HWND);
 void EnviarMensaje(HWND, char*, HWND);
-void ItoC(int, int, int, int, int, int, int, int, char*);
+void ItoC(int, int, int, int, int, int, int, int, int, char*);
 bool ColisionarSerpientes(PEDACITOS*, PEDACITOS*, int, int);
 
 static PEDACITOS* serpiente_cliente = NULL;
@@ -46,6 +46,7 @@ static HPEN plumaAzul, plumaRosa, plumaNegra;
 static HBRUSH brochaAzul, brochaRosa, brochaNegra;
 static int tams = 5;
 static int tamsC = 5;
+static int cliente_conectado = FALSE;
 // Variables globales:
 HINSTANCE hInst;                                // instancia actual
 WCHAR szTitle[MAX_LOADSTRING];                  // Texto de la barra de título
@@ -182,7 +183,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static DWORD idHiloServidor;
 	static DWORD idHiloCliente;
 	static HWND hIP;
-	static int cliente_conectado = FALSE;
 	static int multijugador = FALSE;
 
 	switch (message)
@@ -208,7 +208,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_TIMER1: {
 			GetClientRect(hWnd, &rect);
 			//Ambas serpientes se mueven con el timer
-			if (juego_actual == SERVIDOR) {
+			if (juego_actual == SERVIDOR && cliente_conectado == TRUE) {
 				strcpy(buffer, "");
 				ItoC(
 					serpiente[tams - 1].dir,
@@ -216,11 +216,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					serpiente[tams - 1].pos.x,
 					serpiente[tams - 1].pos.y,
 					com.tipo, com.pos.x, com.pos.y,
-					buffer
+					TRUE, buffer
 				);
 				EnviarMensaje(hWnd, buffer, hIP);
 			}
-			else if (juego_actual == CLIENTE) {
+			else if (juego_actual == CLIENTE && cliente_conectado == TRUE) {
 				strcpy(buffer, "");
 				ItoC(
 					serpiente_cliente[tamsC - 1].dir,
@@ -228,28 +228,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					serpiente_cliente[tamsC - 1].pos.x,
 					serpiente_cliente[tamsC - 1].pos.y,
 					com.tipo, com.pos.x, com.pos.y,
-					buffer
+					TRUE, buffer
 				);
 				EnviarMensaje(hWnd, buffer, hIP);
 			}
-			if (!MoverSerpiente(serpiente, serpiente[tams - 1].dir, rect, tams)) {
-				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio el servidor Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
-			}
-			if (!MoverSerpiente(serpiente_cliente, serpiente_cliente[tamsC - 1].dir, rect, tamsC)) {
-				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio el cliente Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
-			}
-			//Código para verificar si las serpientes chocan entre sí.
-			if (ColisionarSerpientes(serpiente, serpiente_cliente, tams, tamsC)) {
-				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio el servidor Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
-			}
-			if (ColisionarSerpientes(serpiente_cliente, serpiente, tamsC, tams)) {
-				KillTimer(hWnd, ID_TIMER1);
-				MessageBox(hWnd, L"Ya se murio el cliente Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
-			}
-			//if (yo_soy == SERVIDOR) {
+			if (cliente_conectado == TRUE) {
 				cuenta++;
 				if (cuenta == 25) {
 					if (rand() % 100 < 80) {
@@ -262,15 +245,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					com.pos.y = rand() % rect.bottom / TAMSERP;
 					cuenta = 0;
 				}
-			//}
-			//Se verifica si la serpiente come.
-			if (Comer(serpiente, tams)) {
-				serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, rect);
-				com.tipo = NADA;
-			}
-			if (Comer(serpiente_cliente, tamsC)) {
-				serpiente_cliente = AjustarSerpiente(serpiente_cliente, &tamsC, com.tipo, rect);
-				com.tipo = NADA;
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
@@ -330,7 +304,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//dado que también ejecuta código de servidor.
 			//Se dice que es cliente porque se levanta del lado del "cliente"
 			juego_actual = CLIENTE;
-			SetTimer(hWnd, ID_TIMER1, 500, NULL);
+			//SetTimer(hWnd, ID_TIMER1, 500, NULL);
 			hHiloCliente = CreateThread(
 				NULL,
 				0, Servidor,
@@ -341,6 +315,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (hHiloCliente == NULL) {
 				MessageBox(hWnd, L"Error al crear el hilo para el cliente", L"Error", MB_OK | MB_ICONERROR);
 			}
+			strcpy(buffer, "");
+			ItoC(
+				serpiente_cliente[tamsC - 1].dir,
+				tamsC, CLIENTE,
+				serpiente_cliente[tamsC - 1].pos.x,
+				serpiente_cliente[tamsC - 1].pos.y,
+				com.tipo, com.pos.x, com.pos.y,
+				TRUE, buffer
+			);
+			EnviarMensaje(hWnd, buffer, hIP);
 			SetFocus(hWnd);
 			break;
 		default:
@@ -369,31 +353,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente[tams - 1].dir = DER;
 				}
-				/*La variable buffer contiene los datos a enviar entre el servidor y el cliente.*/
-				/*strcpy(buffer, "");
-				ItoC(
-					serpiente[tams - 1].dir, 
-					tams, SERVIDOR, 
-					serpiente[tams - 1].pos.x,
-					serpiente[tams - 1].pos.y,
-					buffer
-				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
 			}
 			if (juego_actual == CLIENTE) {
 				if (serpiente_cliente[tamsC - 1].dir != IZQ)
 				{
 					serpiente_cliente[tamsC - 1].dir = DER;
 				}
-				/*strcpy(buffer, "");
+				strcpy(buffer, "");
 				ItoC(
-					serpiente_cliente[tamsC - 1].dir, 
+					serpiente_cliente[tamsC - 1].dir,
 					tamsC, CLIENTE,
 					serpiente_cliente[tamsC - 1].pos.x,
 					serpiente_cliente[tamsC - 1].pos.y,
-					buffer
+					com.tipo, com.pos.x, com.pos.y,
+					TRUE, buffer
 				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
+				EnviarMensaje(hWnd, buffer, hIP);
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
@@ -415,15 +390,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente[tams - 1].dir = IZQ;
 				}
-				/*strcpy(buffer, "");
-				ItoC(
-					serpiente[tams - 1].dir, 
-					tams, SERVIDOR,
-					serpiente[tams - 1].pos.x,
-					serpiente[tams - 1].pos.y,
-					buffer
-				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
+				
 			}
 			if (juego_actual == CLIENTE) {
 
@@ -431,15 +398,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente_cliente[tamsC - 1].dir = IZQ;
 				}
-				/*strcpy(buffer, "");
+				strcpy(buffer, "");
 				ItoC(
-					serpiente_cliente[tamsC - 1].dir, 
-					tamsC, CLIENTE, 
+					serpiente_cliente[tamsC - 1].dir,
+					tamsC, CLIENTE,
 					serpiente_cliente[tamsC - 1].pos.x,
 					serpiente_cliente[tamsC - 1].pos.y,
-					buffer
+					com.tipo, com.pos.x, com.pos.y,
+					TRUE, buffer
 				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
+				EnviarMensaje(hWnd, buffer, hIP);
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
@@ -461,15 +429,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente[tams - 1].dir = ARR;
 				}
-				/*strcpy(buffer, "");
-				ItoC(
-					serpiente[tams - 1].dir, 
-					tams, SERVIDOR, 
-					serpiente[tams - 1].pos.x,
-					serpiente[tams - 1].pos.y,
-					buffer
-				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
 			}
 			if (juego_actual == CLIENTE) {
 
@@ -477,15 +436,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente_cliente[tamsC - 1].dir = ARR;
 				}
-				/*strcpy(buffer, "");
+				strcpy(buffer, "");
 				ItoC(
-					serpiente_cliente[tamsC - 1].dir, 
-					tamsC, CLIENTE, 
+					serpiente_cliente[tamsC - 1].dir,
+					tamsC, CLIENTE,
 					serpiente_cliente[tamsC - 1].pos.x,
 					serpiente_cliente[tamsC - 1].pos.y,
-					buffer
+					com.tipo, com.pos.x, com.pos.y,
+					TRUE, buffer
 				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
+				EnviarMensaje(hWnd, buffer, hIP);
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
@@ -507,15 +467,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente[tams - 1].dir = ABA;
 				}
-				/*strcpy(buffer, "");
-				ItoC(
-					serpiente[tams - 1].dir, 
-					tams, SERVIDOR, 
-					serpiente[tams - 1].pos.x,
-					serpiente[tams - 1].pos.y,
-					buffer
-				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
 			}
 			if (juego_actual == CLIENTE) {
 
@@ -523,16 +474,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					serpiente_cliente[tamsC - 1].dir = ABA;
 				}
-				/*strcpy(buffer, "");
+				strcpy(buffer, "");
 				ItoC(
-					serpiente_cliente[tamsC - 1].dir, 
+					serpiente_cliente[tamsC - 1].dir,
 					tamsC, CLIENTE,
 					serpiente_cliente[tamsC - 1].pos.x,
 					serpiente_cliente[tamsC - 1].pos.y,
-					buffer
+					com.tipo, com.pos.x, com.pos.y,
+					TRUE, buffer
 				);
-				EnviarMensaje(hWnd, buffer, hIP);*/
-
+				EnviarMensaje(hWnd, buffer, hIP);
 			}
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
@@ -911,6 +862,7 @@ PEDACITOS* AjustarSerpiente(PEDACITOS* serpiente, int* tams, int comida, RECT re
 	}
 	return serpiente;
 }
+
 bool Comer(PEDACITOS* serpiente, int tams) {
 	if (serpiente[tams - 1].pos.x == com.pos.x && serpiente[tams - 1].pos.y == com.pos.y) {
 		return true;
@@ -1089,11 +1041,12 @@ DWORD WINAPI Servidor(LPVOID argumento) {
 
 void ObtenerDatos(char* mensaje, HWND hwnd) {
 	//TCHAR informacion[256];
-	int actual = 0, dir = 0, tam = 0, x = 0, y = 0, comida_tipo = 0, comida_x = 0, comida_y = 0;
+	int actual = 0, dir = 0, tam = 0, x = 0, y = 0, comida_tipo = 0, comida_x = 0, comida_y = 0, conectado;
 
-	sscanf(mensaje, "%d %d %d %d %d %d %d %d", &dir, &tam, &actual, &x, &y, &comida_tipo, &comida_x, &comida_y);
+	sscanf(mensaje, "%d %d %d %d %d %d %d %d %d", &dir, &tam, &actual, &x, &y, &comida_tipo, &comida_x, &comida_y, &conectado);
+	cliente_conectado = conectado;
 
-	//wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir=%d\ntam=%d", actual,dir, tam);
+	//wsprintf(informacion, L"Cliente conectado = %d", cliente_conectado);
 	//MessageBox(NULL, informacion, L"info", MB_OK | MB_ICONINFORMATION);
 	if (actual == SERVIDOR)
 	{
@@ -1103,9 +1056,34 @@ void ObtenerDatos(char* mensaje, HWND hwnd) {
 		serpiente[tams - 1].dir = dir;
 		serpiente[tams - 1].pos.x = x;
 		serpiente[tams - 1].pos.y = y;
-		//com.tipo = comida_tipo;
-		//com.pos.x = comida_x;
-		//com.pos.y = comida_y;
+		com.tipo = comida_tipo;
+		com.pos.x = comida_x;
+		com.pos.y = comida_y;
+		//if (cliente_conectado) {Poner código que sigue aquí para evitar problemas}
+		if (!MoverSerpiente(serpiente, serpiente[tams - 1].dir, rect, tams)) {
+			KillTimer(hwnd, ID_TIMER1);
+			MessageBox(hwnd, L"Ya se murio el servidor Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+		}
+		if (!MoverSerpiente(serpiente_cliente, serpiente_cliente[tamsC - 1].dir, rect, tamsC)) {
+			KillTimer(hwnd, ID_TIMER1);
+			MessageBox(hwnd, L"Ya se murio el cliente Mover", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+		}
+		if (Comer(serpiente, tams)) {
+			serpiente = AjustarSerpiente(serpiente, &tams, com.tipo, rect);
+			com.tipo = NADA;
+		}	
+		if (Comer(serpiente_cliente, tamsC)) {
+			serpiente_cliente = AjustarSerpiente(serpiente_cliente, &tamsC, com.tipo, rect);
+			com.tipo = NADA;
+		}
+		if (ColisionarSerpientes(serpiente, serpiente_cliente, tams, tamsC)) {
+			KillTimer(hwnd, ID_TIMER1);
+			MessageBox(hwnd, L"Ya se murio el servidor Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+		}
+		if (ColisionarSerpientes(serpiente_cliente, serpiente, tamsC, tams)) {
+			KillTimer(hwnd, ID_TIMER1);
+			MessageBox(hwnd, L"Ya se murio el cliente Comer", L"Fin del juego", MB_OK | MB_ICONINFORMATION);
+		}
 	}
 	if (actual == CLIENTE){
 		//wsprintf(informacion, L"Informacion recibida:\nactual=%d\ndir %d", actual,dir);
@@ -1114,9 +1092,6 @@ void ObtenerDatos(char* mensaje, HWND hwnd) {
 		serpiente_cliente[tamsC - 1].dir = dir;
 		serpiente_cliente[tamsC - 1].pos.x = x;
 		serpiente_cliente[tamsC - 1].pos.y = y;
-		com.tipo = comida_tipo;
-		com.pos.x = comida_x;
-		com.pos.y = comida_y;
 	}
 
 	InvalidateRect(hwnd, NULL, TRUE);
@@ -1158,8 +1133,8 @@ void EnviarMensaje(HWND hwnd, char * mensaje, HWND hIP)
 void ItoC(
 	int dir, int tam, int actual, int x, int y, 
 	int comida_tipo, int comida_x, int comida_y,
-	char* buffer
+	int conectado, char* buffer
 ) {
 	/*Procedimiento que permite meter los datos en un buffer para su envío*/
-	sprintf(buffer, "%d %d %d %d %d %d %d %d", dir, tam, actual, x, y, comida_tipo, comida_x, comida_y);
+	sprintf(buffer, "%d %d %d %d %d %d %d %d %d", dir, tam, actual, x, y, comida_tipo, comida_x, comida_y, conectado);
 }
